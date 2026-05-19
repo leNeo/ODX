@@ -146,7 +146,7 @@ class ODMReport(types.ODM_Stage):
                 odm_stats = json.loads(f.read())
 
         # Generate overlap diagram
-        if odm_stats.get('point_cloud_statistics') and point_cloud_file and views_dimension:
+        if odm_stats is not None and odm_stats.get('point_cloud_statistics') and point_cloud_file and views_dimension:
             bounds = odm_stats['point_cloud_statistics'].get('stats', {}).get('bbox', {}).get('native', {}).get('bbox')
             if bounds:
                 image_target_size = 1400 # pixels
@@ -220,4 +220,5 @@ class ODMReport(types.ODM_Stage):
         else:
             log.WARNING("Cannot generate overlap diagram, point cloud stats missing")
 
-        octx.export_report(os.path.join(tree.odm_report, "report.pdf"), odm_stats, self.rerun())
+        if odm_stats is not None:
+            octx.export_report(os.path.join(tree.odm_report, "report.pdf"), odm_stats, self.rerun())
