@@ -821,7 +821,7 @@ class ODM_Photo:
                 ]
             ).lower()
 
-    def to_opensfm_exif(self, rolling_shutter = False, rolling_shutter_readout = 0):
+    def to_opensfm_exif(self, rolling_shutter = False, rolling_shutter_readout = 0, gps_accuracy = 10.0):
         capture_time = 0.0
         if self.utc_time is not None:
             capture_time = self.utc_time / 1000.0
@@ -836,11 +836,7 @@ class ODM_Photo:
             else:
                 gps['altitude'] = 0.0
 
-            dop = self.get_gps_dop()
-            if dop is None:
-                dop = 10.0 # Default
-            
-            gps['dop'] = dop
+            gps['dop'] = gps_accuracy
 
         d = {
             "make": self.camera_make,
