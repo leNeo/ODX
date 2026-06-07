@@ -20,6 +20,8 @@ export OPENBLAS_NUM_THREADS="${processes}"
 export VECLIB_MAXIMUM_THREADS="${processes}"
 export OMP_PROC_BIND=spread
 export OMP_PLACES=cores
+export CC=/usr/bin/clang
+export CXX=/usr/bin/clang++
 
 ensure_prereqs() {
     export DEBIAN_FRONTEND=noninteractive
@@ -39,7 +41,10 @@ ensure_prereqs() {
 installreqs() {
     ensure_prereqs
     
-    brew install cmake gcc@12 python@3.12 tbb eigen gdal boost cgal libomp
+    brew install cmake python@3.12 tbb eigen gdal boost cgal libomp
+
+    export OpenMP_ROOT
+    OpenMP_ROOT="$(brew --prefix libomp)"
 
     # Homebrew Python is externally managed (PEP 668), so install every
     # Python dependency in ODX's own virtual environment.
@@ -61,6 +66,14 @@ installreqs() {
     
 install() {
     installreqs
+
+    if [[ -d "${RUNPATH}/SuperBuild/build" ]] &&
+        grep -Rqs "gcc-12" "${RUNPATH}/SuperBuild/build"; then
+        echo "Removing build products created with the incompatible Homebrew GCC compiler"
+        rm -rf \
+            "${RUNPATH}/SuperBuild/build" \
+            "${RUNPATH}/SuperBuild/install"
+    fi
     
     echo "Compiling SuperBuild"
     cd "${RUNPATH}/SuperBuild"
@@ -68,7 +81,9 @@ install() {
     cd build
     cmake .. \
         -DCMAKE_BUILD_TYPE=Release \
-        -DCMAKE_OSX_ARCHITECTURES=arm64
+        -DCMAKE_OSX_ARCHITECTURES=arm64 \
+        -DCMAKE_C_COMPILER="${CC}" \
+        -DCMAKE_CXX_COMPILER="${CXX}"
     cmake --build . --parallel "${processes}"
 
     cd "${RUNPATH}"

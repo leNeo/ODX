@@ -69,6 +69,7 @@ ExternalProject_Add(${_proj_name}
     ${GPU_CMAKE_ARGS}
     ${WIN32_CMAKE_ARGS}
     ${ARM64_CMAKE_ARGS}
+    ${APPLE_CMAKE_ARGS}
   #--Build step-----------------
   BINARY_DIR        ${_SB_BINARY_DIR}
   #--Install step---------------

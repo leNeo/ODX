@@ -28,6 +28,7 @@ ExternalProject_Add(${_proj_name}
     -DCMAKE_BUILD_TYPE=${CMAKE_BUILD_TYPE}
     -DCMAKE_INSTALL_PREFIX:PATH=${SB_INSTALL_DIR}/lib/python3.12/dist-packages
     ${WIN32_CMAKE_ARGS}
+    ${APPLE_CMAKE_ARGS}
     ${PP_EXTRA_ARGS}
   #--Build step-----------------
   BINARY_DIR        ${_SB_BINARY_DIR}

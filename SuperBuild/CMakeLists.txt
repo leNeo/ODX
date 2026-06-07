@@ -27,29 +27,26 @@ if (APPLE)
         list(APPEND CMAKE_PREFIX_PATH "${HOMEBREW_INSTALL_PREFIX}")
     endif()
 
-    # Use homebrew's clang compiler since Apple
-    # does not allow us to link to libomp
-    set(CXX_PATH ${HOMEBREW_INSTALL_PREFIX}/bin/c++-12)
-    set(APPLE_CMAKE_ARGS "")
-    
-    message("Checking for ${CXX_PATH}...")
-    if(EXISTS "${CXX_PATH}")
-        message("Found Homebrew's C++ compiler: ${CXX_PATH}")
-        set(CMAKE_CXX_COMPILER ${CXX_PATH})
-        list(APPEND APPLE_CMAKE_ARGS "-DCMAKE_CXX_COMPILER=${CMAKE_CXX_COMPILER}")
-    endif()
-
-    set(C_PATH ${HOMEBREW_INSTALL_PREFIX}/bin/gcc-12)
-    message("Checking for ${C_PATH}...")
-    if(EXISTS "${C_PATH}")
-        message("Found Homebrew's C compiler: ${C_PATH}")
-        set(CMAKE_C_COMPILER ${C_PATH})
-        list(APPEND APPLE_CMAKE_ARGS "-DCMAKE_C_COMPILER=${CMAKE_C_COMPILER}")
-    endif()
-
-    if (NOT APPLE_CMAKE_ARGS)
-        message(WARNING "Cannot find Homebrew's compiler, compilation might fail...")
-    endif()
+    # AppleClang links against the active macOS SDK correctly. Homebrew GCC
+    # can fail to find libSystem when used with newer Xcode SDKs.
+    find_program(APPLE_C_COMPILER clang REQUIRED PATHS /usr/bin NO_DEFAULT_PATH)
+    find_program(APPLE_CXX_COMPILER clang++ REQUIRED PATHS /usr/bin NO_DEFAULT_PATH)
+    set(APPLE_OPENMP_ROOT "${HOMEBREW_INSTALL_PREFIX}/opt/libomp")
+    set(APPLE_CMAKE_ARGS
+        "-DCMAKE_C_COMPILER=${APPLE_C_COMPILER}"
+        "-DCMAKE_CXX_COMPILER=${APPLE_CXX_COMPILER}"
+        "-DOpenMP_ROOT=${APPLE_OPENMP_ROOT}"
+        "-DOpenMP_C_FLAGS=-Xclang -fopenmp"
+        "-DOpenMP_CXX_FLAGS=-Xclang -fopenmp"
+        "-DOpenMP_C_LIB_NAMES=libomp"
+        "-DOpenMP_CXX_LIB_NAMES=libomp"
+        "-DOpenMP_C_INCLUDE_DIR=${APPLE_OPENMP_ROOT}/include"
+        "-DOpenMP_CXX_INCLUDE_DIR=${APPLE_OPENMP_ROOT}/include"
+        "-DOpenMP_libomp_LIBRARY=${APPLE_OPENMP_ROOT}/lib/libomp.dylib"
+        "-DCMAKE_POLICY_VERSION_MINIMUM=3.5"
+    )
+    message(STATUS "Using AppleClang: ${APPLE_C_COMPILER}, ${APPLE_CXX_COMPILER}")
+    message(STATUS "Using Homebrew OpenMP: ${APPLE_OPENMP_ROOT}")
 
     if(CMAKE_SYSTEM_PROCESSOR STREQUAL "arm64")
         list(APPEND APPLE_CMAKE_ARGS
@@ -191,7 +188,7 @@ else()
     set (POISSON_BUILD_CMD  make -j${nproc} poissonrecon)
     set (POISSON_BIN_PATH "Linux/PoissonRecon")
     if (APPLE)
-        set(POISSON_BUILD_CMD COMPILER=${CMAKE_CXX_COMPILER} make -j${nproc} -f Makefile.macos poissonrecon)
+        set(POISSON_BUILD_CMD COMPILER=${APPLE_CXX_COMPILER} make -j${nproc} -f Makefile.macos poissonrecon)
     endif()
 endif()
 externalproject_add(poissonrecon
@@ -211,6 +208,9 @@ externalproject_add(dem2mesh
     GIT_TAG           623c8536941175c630fabe4f1352ddc314d98120
     PREFIX            ${SB_BINARY_DIR}/dem2mesh
     SOURCE_DIR        ${SB_SOURCE_DIR}/dem2mesh
+    PATCH_COMMAND     ${CMAKE_COMMAND}
+                      -DSOURCE_FILE=<SOURCE_DIR>/CMakeLists.txt
+                      -P ${CMAKE_CURRENT_SOURCE_DIR}/cmake/Patch-dem2mesh-apple-openmp.cmake
     CMAKE_ARGS        -DCMAKE_INSTALL_PREFIX:PATH=${SB_INSTALL_DIR}
                       ${WIN32_GDAL_ARGS}
                       ${APPLE_CMAKE_ARGS}
@@ -234,6 +234,7 @@ externalproject_add(odm_orthophoto
     SOURCE_DIR        ${SB_SOURCE_DIR}/odm_orthophoto
     CMAKE_ARGS        -DCMAKE_INSTALL_PREFIX:PATH=${SB_INSTALL_DIR}
                       ${WIN32_CMAKE_ARGS} ${WIN32_GDAL_ARGS}
+                      ${APPLE_CMAKE_ARGS}
 )
 
 externalproject_add(fastrasterfilter
@@ -243,6 +244,7 @@ externalproject_add(fastrasterfilter
     SOURCE_DIR        ${SB_SOURCE_DIR}/fastrasterfilter
     CMAKE_ARGS        -DCMAKE_INSTALL_PREFIX:PATH=${SB_INSTALL_DIR}
                       ${WIN32_CMAKE_ARGS} ${WIN32_GDAL_ARGS}
+                      ${APPLE_CMAKE_ARGS}
 )
 
 externalproject_add(lastools
@@ -251,6 +253,7 @@ externalproject_add(lastools
     PREFIX            ${SB_BINARY_DIR}/lastools
     SOURCE_DIR        ${SB_SOURCE_DIR}/lastools
     CMAKE_ARGS        -DCMAKE_INSTALL_PREFIX:PATH=${SB_INSTALL_DIR}
+                      ${APPLE_CMAKE_ARGS}
 )
 
 externalproject_add(draco
@@ -262,4 +265,5 @@ externalproject_add(draco
     CMAKE_ARGS        -DDRACO_TRANSCODER_SUPPORTED=ON 
                       -DCMAKE_INSTALL_PREFIX:PATH=${SB_INSTALL_DIR} 
                       ${WIN32_CMAKE_ARGS}
+                      ${APPLE_CMAKE_ARGS}
 )
