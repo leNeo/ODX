@@ -1,21 +1,23 @@
 #!/bin/bash
 
-uname=$(uname)
-if [[ "$uname" != "Darwin" ]]; then
+set -euo pipefail
+
+uname_s="$(uname -s)"
+if [[ "${uname_s}" != "Darwin" ]]; then
     echo "This script is meant for MacOS only."
     exit 1
 fi
 
-if [[ $2 =~ ^[0-9]+$ ]] ; then
-    processes=$2
+if [[ "${2:-}" =~ ^[0-9]+$ ]] ; then
+    processes="${2}"
 else
     processes=$(sysctl -n hw.perflevel0.physicalcpu 2>/dev/null || sysctl -n hw.ncpu)
 fi
 
-export CMAKE_BUILD_PARALLEL_LEVEL=$processes
-export OMP_NUM_THREADS=$processes
-export OPENBLAS_NUM_THREADS=$processes
-export VECLIB_MAXIMUM_THREADS=$processes
+export CMAKE_BUILD_PARALLEL_LEVEL="${processes}"
+export OMP_NUM_THREADS="${processes}"
+export OPENBLAS_NUM_THREADS="${processes}"
+export VECLIB_MAXIMUM_THREADS="${processes}"
 export OMP_PROC_BIND=spread
 export OMP_PLACES=cores
 
@@ -39,45 +41,46 @@ installreqs() {
     
     brew install cmake gcc@12 python@3.12 tbb eigen gdal boost cgal libomp
 
-    python3.12 -m pip install virtualenv
-
-    if [ ! -e ${RUNPATH}/venv ]; then
-        python3.12 -m virtualenv venv
-    fi
-
-    source venv/bin/activate
+    # Homebrew Python is externally managed (PEP 668), so install every
+    # Python dependency in ODX's own virtual environment.
+    python3.12 -m venv "${RUNPATH}/venv"
+    venv_python="${RUNPATH}/venv/bin/python3"
+    "${venv_python}" -m pip install --upgrade pip setuptools wheel
 
     requirements_file=$(mktemp)
+    trap 'rm -f "${requirements_file}"' EXIT
     grep -v "^gdal\\[numpy\\].*sys_platform == 'darwin'" \
-        requirements.txt > "${requirements_file}"
-    pip install --ignore-installed -r "${requirements_file}"
+        "${RUNPATH}/requirements.txt" > "${requirements_file}"
+    "${venv_python}" -m pip install --ignore-installed -r "${requirements_file}"
     rm -f "${requirements_file}"
+    trap - EXIT
 
     gdal_version=$(gdal-config --version)
-    pip install --no-binary gdal "gdal[numpy]==${gdal_version}"
+    "${venv_python}" -m pip install --no-binary gdal "gdal[numpy]==${gdal_version}"
 }
     
 install() {
     installreqs
     
     echo "Compiling SuperBuild"
-    cd ${RUNPATH}/SuperBuild
-    mkdir -p build && cd build
+    cd "${RUNPATH}/SuperBuild"
+    mkdir -p build
+    cd build
     cmake .. \
         -DCMAKE_BUILD_TYPE=Release \
         -DCMAKE_OSX_ARCHITECTURES=arm64
-    cmake --build . --parallel $processes
+    cmake --build . --parallel "${processes}"
 
-    cd ${RUNPATH}
+    cd "${RUNPATH}"
 
     echo "Configuration Finished"
 }
 
 uninstall() {
     echo "Removing SuperBuild and build directories"
-    cd ${RUNPATH}/SuperBuild
+    cd "${RUNPATH}/SuperBuild"
     rm -rfv build src download install
-    cd ../
+    cd ..
     rm -rfv build
 }
 
@@ -89,12 +92,12 @@ reinstall() {
 
 clean() {
     rm -rf \
-        ${RUNPATH}/SuperBuild/build \
-        ${RUNPATH}/SuperBuild/download \
-        ${RUNPATH}/SuperBuild/src
+        "${RUNPATH}/SuperBuild/build" \
+        "${RUNPATH}/SuperBuild/download" \
+        "${RUNPATH}/SuperBuild/src"
 
     # find in /code and delete static libraries and intermediate object files
-    find ${RUNPATH} -type f -name "*.a" -delete -or -type f -name "*.o" -delete
+    find "${RUNPATH}" -type f -name "*.a" -delete -or -type f -name "*.o" -delete
 }
 
 usage() {
@@ -113,12 +116,12 @@ usage() {
     echo "    Cleans the SuperBuild directory by removing temporary files. "
     echo "  help"
     echo "    Displays this message"
-    echo "[nproc] is an optional argument that can set the number of processes for the make -j tag. By default it uses $(nproc)"
+    echo "[nproc] optionally sets the number of parallel build processes."
 }
 
-if [[ $1 =~ ^(install|reinstall|uninstall|installreqs|clean)$ ]]; then
+if [[ "${1:-}" =~ ^(install|reinstall|uninstall|installreqs|clean)$ ]]; then
     RUNPATH="$( cd "$( dirname "${BASH_SOURCE[0]}" )" && pwd )"
-    "$1"
+    "${1}"
 else
     echo "Invalid instructions." >&2
     usage
