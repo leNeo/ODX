@@ -22,6 +22,9 @@ from stages.odm_app import ODMApp
 if __name__ == '__main__':
     args = config.config()
 
+    if args.no_gpu:
+        os.environ["ODM_NO_GPU"] = "1"
+
     log.INFO('Initializing ODX %s - %s' % (log.get_version(), system.now()))
 
     progressbc.set_project_name(args.name)

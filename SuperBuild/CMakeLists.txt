@@ -50,6 +50,16 @@ if (APPLE)
     if (NOT APPLE_CMAKE_ARGS)
         message(WARNING "Cannot find Homebrew's compiler, compilation might fail...")
     endif()
+
+    if(CMAKE_SYSTEM_PROCESSOR STREQUAL "arm64")
+        list(APPEND APPLE_CMAKE_ARGS
+            "-DCMAKE_OSX_ARCHITECTURES=arm64"
+            "-DCMAKE_BUILD_TYPE=Release"
+            "-DCMAKE_C_FLAGS_RELEASE=-O3 -mcpu=native -DNDEBUG"
+            "-DCMAKE_CXX_FLAGS_RELEASE=-O3 -mcpu=native -DNDEBUG"
+        )
+        message(STATUS "Enabling native Apple Silicon release optimizations")
+    endif()
 endif()
 
 ################################

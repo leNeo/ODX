@@ -142,6 +142,24 @@ See https://docs.nvidia.com/datacenter/cloud-native/container-toolkit/latest/ins
 
 You can disable GPU acceleration by using `--no-gpu`.
 
+### Apple Silicon / CoreML
+
+On a native macOS ARM64 build, ODX uses ONNX Runtime's CoreML execution
+provider for sky and background removal models. CoreML can use the Apple GPU
+and Neural Engine, with automatic CPU fallback.
+
+```sh
+export ODX_COREML_COMPUTE_UNITS=ALL
+bash configure_macos.sh install
+```
+
+Accepted compute-unit values are `ALL`, `CPUAndGPU`,
+`CPUAndNeuralEngine`, and `CPUOnly`. Set `ODX_COREML_PROFILE=1` to enable
+CoreML compute-plan profiling.
+
+OpenMVS dense matching remains CPU-only on macOS. Its current GPU backend is
+CUDA-specific and does not support Metal.
+
 ### Build Docker Images
 
 If you want to rebuild your own docker image, from the `ODX` folder you can type:
@@ -232,6 +250,5 @@ ODX makes use of other awesome open source projects to perform its tasks. Among 
  - [MVS Texturing](https://github.com/nmoehrle/mvs-texturing)
  - [GDAL](https://gdal.org/)
  - [PoissonRecon](https://github.com/mkazhdan/PoissonRecon)
-
 
 

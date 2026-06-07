@@ -1,9 +1,5 @@
 #!/bin/bash
 
-echo "!!! WARNING!                                                                      !!!"
-echo "!!! This script is not currently maintained and may not work!                     !!!"
-echo "!!! See https://community.opendronemap.org/t/odm-install-on-a-mac-os-14-6-1/25007 !!!"
-
 uname=$(uname)
 if [[ "$uname" != "Darwin" ]]; then
     echo "This script is meant for MacOS only."
@@ -13,8 +9,15 @@ fi
 if [[ $2 =~ ^[0-9]+$ ]] ; then
     processes=$2
 else
-    processes=$(sysctl -n hw.ncpu)
+    processes=$(sysctl -n hw.perflevel0.physicalcpu 2>/dev/null || sysctl -n hw.ncpu)
 fi
+
+export CMAKE_BUILD_PARALLEL_LEVEL=$processes
+export OMP_NUM_THREADS=$processes
+export OPENBLAS_NUM_THREADS=$processes
+export VECLIB_MAXIMUM_THREADS=$processes
+export OMP_PROC_BIND=spread
+export OMP_PLACES=cores
 
 ensure_prereqs() {
     export DEBIAN_FRONTEND=noninteractive
@@ -34,8 +37,7 @@ ensure_prereqs() {
 installreqs() {
     ensure_prereqs
     
-    brew install cmake gcc@12 python@3.12 tbb@2020 eigen gdal boost cgal libomp
-    brew link tbb@2020
+    brew install cmake gcc@12 python@3.12 tbb eigen gdal boost cgal libomp
 
     python3.12 -m pip install virtualenv
 
@@ -44,7 +46,15 @@ installreqs() {
     fi
 
     source venv/bin/activate
-    pip install --ignore-installed -r requirements.txt
+
+    requirements_file=$(mktemp)
+    grep -v "^gdal\\[numpy\\].*sys_platform == 'darwin'" \
+        requirements.txt > "${requirements_file}"
+    pip install --ignore-installed -r "${requirements_file}"
+    rm -f "${requirements_file}"
+
+    gdal_version=$(gdal-config --version)
+    pip install --no-binary gdal "gdal[numpy]==${gdal_version}"
 }
     
 install() {
@@ -53,20 +63,10 @@ install() {
     echo "Compiling SuperBuild"
     cd ${RUNPATH}/SuperBuild
     mkdir -p build && cd build
-    cmake .. && make -j$processes
-
-    cd /tmp
-    pip download GDAL==3.11.1
-    tar -xpzf GDAL-3.11.1.tar.gz
-    cd GDAL-3.11.1
-    if [ -e /opt/homebrew/bin/gdal-config ]; then
-        python setup.py build_ext --gdal-config /opt/homebrew/bin/gdal-config
-    else
-        python setup.py build_ext --gdal-config /usr/local/bin/gdal-config
-    fi
-    python setup.py build
-    python setup.py install
-    rm -fr /tmp/GDAL-3.11.1 /tmp/GDAL-3.11.1.tar.gz
+    cmake .. \
+        -DCMAKE_BUILD_TYPE=Release \
+        -DCMAKE_OSX_ARCHITECTURES=arm64
+    cmake --build . --parallel $processes
 
     cd ${RUNPATH}
 

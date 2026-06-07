@@ -3,16 +3,13 @@ import time
 import numpy as np
 import cv2
 import os
-import onnxruntime as ort
 from .guidedfilter import guided_filter
 from opendm import log
 from opendm.ai import read_image
+from opendm.onnx_providers import create_inference_session
 from threading import Lock
 
 mutex = Lock()
-
-# Use GPU if it is available, otherwise CPU
-provider = "CUDAExecutionProvider" if "CUDAExecutionProvider" in ort.get_available_providers() else "CPUExecutionProvider"
 
 class SkyFilter():
 
@@ -21,13 +18,12 @@ class SkyFilter():
         self.model = model
         self.width, self.height = width, height
 
-        log.INFO(' ?> Using provider %s' % provider)
         self.load_model()
 
     
     def load_model(self):
         log.INFO(' -> Loading the model')
-        self.session = ort.InferenceSession(self.model, providers=[provider])     
+        self.session = create_inference_session(self.model)
 
 
     def get_mask(self, img):

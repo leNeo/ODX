@@ -3,30 +3,26 @@ import time
 import numpy as np
 import cv2
 import os
-import onnxruntime as ort
 from opendm import log
 from opendm.ai import read_image
+from opendm.onnx_providers import create_inference_session
 from threading import Lock
 
 mutex = Lock()
 
 # Implementation based on https://github.com/danielgatis/rembg by Daniel Gatis
 
-# Use GPU if it is available, otherwise CPU
-provider = "CUDAExecutionProvider" if "CUDAExecutionProvider" in ort.get_available_providers() else "CPUExecutionProvider"
-
 class BgFilter():
     def __init__(self, model):
         self.model = model
 
-        log.INFO(' ?> Using provider %s' % provider)
         self.load_model()
 
     
     def load_model(self):
         log.INFO(' -> Loading the model')
 
-        self.session = ort.InferenceSession(self.model, providers=[provider])
+        self.session = create_inference_session(self.model)
 
     def normalize(self, img, mean, std, size):
         im = cv2.resize(img, size, interpolation=cv2.INTER_AREA)
