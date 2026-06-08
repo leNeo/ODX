@@ -149,6 +149,16 @@ set(ODM_GFlags_Version 2.2.2)
 option(ODM_BUILD_GFlags "Force to build GFlags library" OFF)
 SETUP_EXTERNAL_PROJECT(GFlags ${ODM_GFlags_Version} ${ODM_BUILD_GFlags})
 
+externalproject_add(eigen34
+    GIT_REPOSITORY  https://gitlab.com/libeigen/eigen.git
+    GIT_TAG         7176ae16238ded7fb5ed30a7f5215825b3abd134
+    UPDATE_COMMAND  ""
+    SOURCE_DIR      ${SB_SOURCE_DIR}/eigen34
+    CMAKE_ARGS      -DCMAKE_INSTALL_PREFIX:PATH=${SB_INSTALL_DIR}
+                    -DBUILD_TESTING=OFF
+                    ${APPLE_CMAKE_ARGS}
+)
+
 set(ODM_Ceres_Version 2.0.0)
 option(ODM_BUILD_Ceres "Force to build Ceres library" OFF)
 SETUP_EXTERNAL_PROJECT(Ceres ${ODM_Ceres_Version} ${ODM_BUILD_Ceres})

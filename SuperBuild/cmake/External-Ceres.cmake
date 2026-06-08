@@ -2,7 +2,7 @@ set(_proj_name ceres)
 set(_SB_BINARY_DIR "${SB_BINARY_DIR}/${_proj_name}")
 
 ExternalProject_Add(${_proj_name}
-  DEPENDS           gflags
+  DEPENDS           gflags eigen34
   PREFIX            ${_SB_BINARY_DIR}
   TMP_DIR           ${_SB_BINARY_DIR}/tmp
   STAMP_DIR         ${_SB_BINARY_DIR}/stamp
@@ -21,6 +21,7 @@ ExternalProject_Add(${_proj_name}
     -DUSE_CUDA=OFF
     -DMINIGLOG=ON
     -DMINIGLOG_MAX_LOG_LEVEL=-100
+    -DEigen3_DIR=${SB_INSTALL_DIR}/share/eigen3/cmake
     -DCMAKE_INSTALL_PREFIX:PATH=${SB_INSTALL_DIR}
     ${WIN32_CMAKE_ARGS}
     ${APPLE_CMAKE_ARGS}

@@ -12,17 +12,6 @@ externalproject_add(vcg
     INSTALL_COMMAND ""
 )
 
-externalproject_add(eigen34
-    GIT_REPOSITORY  https://gitlab.com/libeigen/eigen.git
-    GIT_TAG         7176ae16238ded7fb5ed30a7f5215825b3abd134
-    UPDATE_COMMAND  ""
-    SOURCE_DIR      ${SB_SOURCE_DIR}/eigen34
-    CONFIGURE_COMMAND ""
-    BUILD_IN_SOURCE 1
-    BUILD_COMMAND   ""
-    INSTALL_COMMAND ""
-)
-
 SET(ARM64_CMAKE_ARGS "")
 
 if(${CMAKE_SYSTEM_PROCESSOR} STREQUAL "aarch64" OR ${CMAKE_SYSTEM_PROCESSOR} STREQUAL "arm64")
