@@ -1,5 +1,6 @@
 set(_proj_name opencv)
 set(_SB_BINARY_DIR "${SB_BINARY_DIR}/${_proj_name}")
+set(OCV_WITH_FFMPEG ON)
 
 if (WIN32)
   set(OCV_CMAKE_EXTRA_ARGS -DPYTHON3_NUMPY_INCLUDE_DIRS=${PYTHON_HOME}/lib/site-packages/numpy/_core/include
@@ -10,20 +11,58 @@ if (WIN32)
                              -DOPENCV_BIN_INSTALL_PATH=${SB_INSTALL_DIR}/bin)
 elseif(APPLE)
   # macOS is unable to automatically detect our Python libs
-  set(OCV_CMAKE_EXTRA_ARGS -DPYTHON3_NUMPY_INCLUDE_DIRS=${PYTHON_HOME}/lib/python3.12/site-packages/numpy/core/include
-                           -DPYTHON3_PACKAGES_PATH=${PYTHON_HOME}/lib/python3.12/site-packages
+  set(OCV_WITH_FFMPEG OFF)
+  execute_process(
+    COMMAND ${PYTHON_EXE_PATH} -c "import numpy; print(numpy.get_include())"
+    OUTPUT_VARIABLE PYTHON_NUMPY_INCLUDE_DIR
+    OUTPUT_STRIP_TRAILING_WHITESPACE
+    COMMAND_ERROR_IS_FATAL ANY
+  )
+  execute_process(
+    COMMAND ${PYTHON_EXE_PATH} -c "import sys; print(sys.version_info.major)"
+    OUTPUT_VARIABLE PYTHON_VERSION_MAJOR
+    OUTPUT_STRIP_TRAILING_WHITESPACE
+    COMMAND_ERROR_IS_FATAL ANY
+  )
+  execute_process(
+    COMMAND ${PYTHON_EXE_PATH} -c "import sys; print(sys.version_info.minor)"
+    OUTPUT_VARIABLE PYTHON_VERSION_MINOR
+    OUTPUT_STRIP_TRAILING_WHITESPACE
+    COMMAND_ERROR_IS_FATAL ANY
+  )
+  execute_process(
+    COMMAND ${PYTHON_EXE_PATH} -c "import sysconfig; print(sysconfig.get_path('purelib'))"
+    OUTPUT_VARIABLE PYTHON_PACKAGES_PATH
+    OUTPUT_STRIP_TRAILING_WHITESPACE
+    COMMAND_ERROR_IS_FATAL ANY
+  )
+  execute_process(
+    COMMAND ${PYTHON_EXE_PATH} -c "import sysconfig; print(sysconfig.get_path('include'))"
+    OUTPUT_VARIABLE PYTHON_INCLUDE_DIR
+    OUTPUT_STRIP_TRAILING_WHITESPACE
+    COMMAND_ERROR_IS_FATAL ANY
+  )
+
+  set(PYTHON_VERSION "${PYTHON_VERSION_MAJOR}.${PYTHON_VERSION_MINOR}")
+  set(PYTHON_LIBRARY
+      "${HOMEBREW_INSTALL_PREFIX}/opt/python@${PYTHON_VERSION}/Frameworks/Python.framework/Versions/${PYTHON_VERSION}/lib/libpython${PYTHON_VERSION}.dylib")
+
+  set(OCV_CMAKE_EXTRA_ARGS -DPYTHON3_NUMPY_INCLUDE_DIRS=${PYTHON_NUMPY_INCLUDE_DIR}
+                           -DPython3_NumPy_INCLUDE_DIRS=${PYTHON_NUMPY_INCLUDE_DIR}
+                           -DPYTHON3_PACKAGES_PATH=${PYTHON_PACKAGES_PATH}
                            -DPYTHON3_EXECUTABLE=${PYTHON_EXE_PATH}
-                           -DPYTHON3_LIBRARIES=${HOMEBREW_INSTALL_PREFIX}/opt/python@3.12/Frameworks/Python.framework/Versions/3.12/lib/libpython3.12.dylib
-                           -DPYTHON3_INCLUDE_DIR=${HOMEBREW_INSTALL_PREFIX}/opt/python@3.12/Frameworks/Python.framework/Versions/3.12/include/python3.12/
-                           -DPYTHON3_INCLUDE_PATH=${HOMEBREW_INSTALL_PREFIX}/opt/python@3.12/Frameworks/Python.framework/Versions/3.12/include/python3.12/
+                           -DPython3_EXECUTABLE=${PYTHON_EXE_PATH}
+                           -DPYTHON3_LIBRARIES=${PYTHON_LIBRARY}
+                           -DPYTHON3_INCLUDE_DIR=${PYTHON_INCLUDE_DIR}
+                           -DPYTHON3_INCLUDE_PATH=${PYTHON_INCLUDE_DIR}
                            -DPYTHON3INTERP_FOUND=ON
                            -DPYTHON3LIBS_FOUND=ON
                            -DPYTHON_DEFAULT_AVAILABLE=ON
                            -DPYTHON_DEFAULT_EXECUTABLE=${PYTHON_EXE_PATH}
-                           -DPYTHON3_VERSION_MAJOR=3
-                           -DPYTHON3_VERSION_MINOR=8
+                           -DPYTHON3_VERSION_MAJOR=${PYTHON_VERSION_MAJOR}
+                           -DPYTHON3_VERSION_MINOR=${PYTHON_VERSION_MINOR}
                            -DOPENCV_CONFIG_INSTALL_PATH=
-                           -DOPENCV_PYTHON_INSTALL_PATH=${SB_INSTALL_DIR}/lib/python3.12/dist-packages
+                           -DOPENCV_PYTHON_INSTALL_PATH=${SB_INSTALL_DIR}/lib/python${PYTHON_VERSION}/dist-packages
                            -DHAVE_opencv_python3=ON
                            -DOPENCV_PYTHON_SKIP_DETECTION=ON
                            -DOPENCV_LIB_INSTALL_PATH=${SB_INSTALL_DIR}/lib
@@ -59,7 +98,7 @@ ExternalProject_Add(${_proj_name}
     -DBUILD_opencv_photo=ON
     -DBUILD_opencv_legacy=ON
     -DBUILD_opencv_python3=ON
-    -DWITH_FFMPEG=ON
+    -DWITH_FFMPEG=${OCV_WITH_FFMPEG}
     -DWITH_CUDA=OFF
     -DWITH_GTK=OFF
     -DWITH_VTK=OFF
