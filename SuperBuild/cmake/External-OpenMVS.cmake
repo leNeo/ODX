@@ -52,8 +52,11 @@ ExternalProject_Add(${_proj_name}
   STAMP_DIR         ${_SB_BINARY_DIR}/stamp
   #--Download step--------------
   DOWNLOAD_DIR      ${SB_DOWNLOAD_DIR}
-  GIT_REPOSITORY    https://github.com/WebODM/openMVS
-  GIT_TAG           355
+  # Metal-enabled OpenMVS (WebODM/openMVS@355 + Metal compute backend for Apple
+  # Silicon). Metal auto-enables on Apple; no-op off-Apple (guarded by _USE_METAL),
+  # so this builds identically to WebODM/openMVS@355 on Linux/Windows.
+  GIT_REPOSITORY    https://github.com/leNeo/openMVS-metal
+  GIT_TAG           metal-webodm-355
   #--Update/Patch step----------
   UPDATE_COMMAND    ""
   #--Configure step-------------
