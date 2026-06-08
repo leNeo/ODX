@@ -10,18 +10,30 @@ endif()
 ]=])
 set(modern_openmp [=[
 find_package(OpenMP REQUIRED)
+include_directories(SYSTEM ${OpenMP_CXX_INCLUDE_DIRS} ${OpenMP_CXX_INCLUDE_DIR})
+link_libraries(OpenMP::OpenMP_CXX)
+]=])
+set(previous_openmp [=[
+find_package(OpenMP REQUIRED)
 link_libraries(OpenMP::OpenMP_CXX)
 ]=])
 
 string(FIND "${root_contents}" "${modern_openmp}" modern_openmp_position)
 if(modern_openmp_position EQUAL -1)
-    string(FIND "${root_contents}" "${legacy_openmp}" legacy_openmp_position)
-    if(legacy_openmp_position EQUAL -1)
+    set(openmp_replaced FALSE)
+    foreach(candidate IN ITEMS "${legacy_openmp}" "${previous_openmp}")
+        string(FIND "${root_contents}" "${candidate}" candidate_position)
+        if(NOT candidate_position EQUAL -1)
+            string(REPLACE
+                "${candidate}" "${modern_openmp}"
+                root_contents "${root_contents}")
+            set(openmp_replaced TRUE)
+            break()
+        endif()
+    endforeach()
+    if(NOT openmp_replaced)
         message(FATAL_ERROR "Cannot patch MvsTexturing: expected OpenMP block was not found")
     endif()
-    string(REPLACE
-        "${legacy_openmp}" "${modern_openmp}"
-        root_contents "${root_contents}")
 endif()
 
 set(legacy_root_include

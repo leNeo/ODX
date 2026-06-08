@@ -15,6 +15,7 @@ ExternalProject_Add(${_proj_name}
   #--Configure step-------------
   SOURCE_DIR        ${SB_SOURCE_DIR}/${_proj_name}
   CMAKE_ARGS
+    -DCMAKE_CXX_FLAGS=
     -DPDAL_DIR=${SB_INSTALL_DIR}/lib/cmake/PDAL
     -DADDITIONAL_LINK_DIRECTORIES_PATHS=${SB_INSTALL_DIR}/lib
     -DWITH_TESTS=OFF
