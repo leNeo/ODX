@@ -4,6 +4,7 @@ include(ProcessorCount)
 ProcessorCount(nproc)
 
 set(EXTRA_INCLUDE_DIRS "")
+set(SUITESPARSE_CMAKE_ARGS "")
 if(WIN32)
   set(OpenCV_DIR "${SB_INSTALL_DIR}/x64/vc17/lib")
   set(BUILD_CMD ${CMAKE_COMMAND} --build "${SB_BUILD_DIR}/opensfm" --config "${CMAKE_BUILD_TYPE}")
@@ -11,6 +12,10 @@ else()
   set(BUILD_CMD make "-j${nproc}")
   if (APPLE)
     set(OpenCV_DIR "${SB_INSTALL_DIR}")
+    set(SUITESPARSE_CMAKE_ARGS
+      -DSUITESPARSE_INCLUDE_DIR_HINTS=${HOMEBREW_INSTALL_PREFIX}/include/suitesparse
+      -DSUITESPARSE_LIBRARY_DIR_HINTS=${HOMEBREW_INSTALL_PREFIX}/lib
+    )
   else()
     set(OpenCV_DIR "${SB_INSTALL_DIR}/lib/cmake/opencv4")
   endif()
@@ -41,6 +46,7 @@ ExternalProject_Add(${_proj_name}
     -DOPENSFM_BUILD_TESTS=off
     -DPYTHON_EXECUTABLE=${PYTHON_EXE_PATH}
     ${WIN32_CMAKE_ARGS}
+    ${SUITESPARSE_CMAKE_ARGS}
     ${APPLE_OPENMP_CMAKE_ARGS}
   BUILD_COMMAND ${BUILD_CMD}
   #--Build step-----------------
