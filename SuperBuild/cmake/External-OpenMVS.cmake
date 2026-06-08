@@ -23,8 +23,13 @@ endif()
 
 SET(GPU_CMAKE_ARGS "")
 SET(OPENMVS_OPENCV_DIR "${SB_INSTALL_DIR}/lib/cmake/opencv4")
+SET(OPENMVS_RPATH_ARGS "")
 if(APPLE)
     SET(OPENMVS_OPENCV_DIR "${SB_INSTALL_DIR}")
+    SET(OPENMVS_RPATH_ARGS
+        "-DCMAKE_INSTALL_RPATH=@loader_path/../../lib"
+        "-DCMAKE_BUILD_WITH_INSTALL_RPATH=ON"
+    )
 endif()
 
 if(UNIX)
@@ -70,6 +75,7 @@ ExternalProject_Add(${_proj_name}
     ${GPU_CMAKE_ARGS}
     ${WIN32_CMAKE_ARGS}
     ${ARM64_CMAKE_ARGS}
+    ${OPENMVS_RPATH_ARGS}
     ${APPLE_OPENMP_CMAKE_ARGS}
   #--Build step-----------------
   BINARY_DIR        ${_SB_BINARY_DIR}
