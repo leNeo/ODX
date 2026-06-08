@@ -27,6 +27,10 @@ ExternalProject_Add(${_proj_name}
   GIT_TAG           91f58841370b0c28bc1248d038b1930fa11d0637
   #--Update/Patch step----------
   UPDATE_COMMAND    git submodule update --init --recursive
+  PATCH_COMMAND
+    ${CMAKE_COMMAND}
+    -DOPENSFM_SOURCE_DIR=<SOURCE_DIR>
+    -P ${CMAKE_CURRENT_LIST_DIR}/Patch-opensfm-appleclang.cmake
   #--Configure step-------------
   SOURCE_DIR        ${SB_INSTALL_DIR}/bin/${_proj_name}
   CONFIGURE_COMMAND ${CMAKE_COMMAND} <SOURCE_DIR>/${_proj_name}/src
