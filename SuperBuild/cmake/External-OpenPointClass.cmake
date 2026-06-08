@@ -12,6 +12,10 @@ ExternalProject_Add(${_proj_name}
   GIT_TAG           f714fecd1f7f5fe5fd66dc9fafc0aac022c7f6d6
   #--Update/Patch step----------
   UPDATE_COMMAND    ""
+  PATCH_COMMAND
+    ${CMAKE_COMMAND}
+    -DSOURCE_FILE=<SOURCE_DIR>/CMakeLists.txt
+    -P ${CMAKE_CURRENT_LIST_DIR}/Patch-openpointclass-lightgbm.cmake
   #--Configure step-------------
   SOURCE_DIR        ${SB_SOURCE_DIR}/${_proj_name}
   CMAKE_ARGS

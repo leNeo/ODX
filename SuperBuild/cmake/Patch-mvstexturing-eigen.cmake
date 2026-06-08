@@ -1,5 +1,29 @@
 file(READ "${ROOT_FILE}" root_contents)
 
+set(legacy_openmp [=[
+FIND_PACKAGE(OpenMP)
+if(OPENMP_FOUND)
+    set(CMAKE_C_FLAGS "${CMAKE_C_FLAGS} ${OpenMP_C_FLAGS}")
+    set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} ${OpenMP_CXX_FLAGS}")
+    set(CMAKE_EXE_LINKER_FLAGS "${CMAKE_EXE_LINKER_FLAGS} ${OpenMP_EXE_LINKER_FLAGS}")
+endif()
+]=])
+set(modern_openmp [=[
+find_package(OpenMP REQUIRED)
+link_libraries(OpenMP::OpenMP_CXX)
+]=])
+
+string(FIND "${root_contents}" "${modern_openmp}" modern_openmp_position)
+if(modern_openmp_position EQUAL -1)
+    string(FIND "${root_contents}" "${legacy_openmp}" legacy_openmp_position)
+    if(legacy_openmp_position EQUAL -1)
+        message(FATAL_ERROR "Cannot patch MvsTexturing: expected OpenMP block was not found")
+    endif()
+    string(REPLACE
+        "${legacy_openmp}" "${modern_openmp}"
+        root_contents "${root_contents}")
+endif()
+
 set(legacy_root_include
     "    \${CMAKE_SOURCE_DIR}/elibs/eigen")
 set(modern_root_include
@@ -14,8 +38,9 @@ if(modern_root_position EQUAL -1)
     string(REPLACE
         "${legacy_root_include}" "${modern_root_include}"
         root_contents "${root_contents}")
-    file(WRITE "${ROOT_FILE}" "${root_contents}")
 endif()
+
+file(WRITE "${ROOT_FILE}" "${root_contents}")
 
 file(READ "${ELIBS_FILE}" elibs_contents)
 
