@@ -19,6 +19,11 @@ if(${CMAKE_SYSTEM_PROCESSOR} STREQUAL "aarch64" OR ${CMAKE_SYSTEM_PROCESSOR} STR
 endif()
 
 SET(GPU_CMAKE_ARGS "")
+SET(OPENMVS_OPENCV_DIR "${SB_INSTALL_DIR}/lib/cmake/opencv4")
+if(APPLE)
+    SET(OPENMVS_OPENCV_DIR "${SB_INSTALL_DIR}")
+endif()
+
 if(UNIX)
     if (EXISTS "/usr/local/cuda/lib64/stubs")
         SET(GPU_CMAKE_ARGS -DCMAKE_LIBRARY_PATH=/usr/local/cuda/lib64/stubs)
@@ -52,7 +57,7 @@ ExternalProject_Add(${_proj_name}
   #--Configure step-------------
   SOURCE_DIR        ${SB_SOURCE_DIR}/${_proj_name}
   CMAKE_ARGS
-    -DOpenCV_DIR=${SB_INSTALL_DIR}/lib/cmake/opencv4
+    -DOpenCV_DIR=${OPENMVS_OPENCV_DIR}
     -DVCG_ROOT=${SB_SOURCE_DIR}/vcg
     -DEIGEN3_INCLUDE_DIR=${SB_SOURCE_DIR}/eigen34/
     -DCMAKE_BUILD_TYPE=${CMAKE_BUILD_TYPE}
