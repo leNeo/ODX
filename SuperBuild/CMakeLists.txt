@@ -273,7 +273,7 @@ externalproject_add(fastrasterfilter
     SOURCE_DIR        ${SB_SOURCE_DIR}/fastrasterfilter
     CMAKE_ARGS        -DCMAKE_INSTALL_PREFIX:PATH=${SB_INSTALL_DIR}
                       ${WIN32_CMAKE_ARGS} ${WIN32_GDAL_ARGS}
-                      ${APPLE_CMAKE_ARGS}
+                      ${APPLE_OPENMP_CMAKE_ARGS}
 )
 
 externalproject_add(lastools
