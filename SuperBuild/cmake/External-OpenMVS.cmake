@@ -45,6 +45,10 @@ ExternalProject_Add(${_proj_name}
   GIT_TAG           355
   #--Update/Patch step----------
   UPDATE_COMMAND    ""
+  PATCH_COMMAND
+    ${CMAKE_COMMAND}
+    -DOPENMVS_SOURCE_DIR=<SOURCE_DIR>
+    -P ${CMAKE_CURRENT_LIST_DIR}/Patch-openmvs-boost-system.cmake
   #--Configure step-------------
   SOURCE_DIR        ${SB_SOURCE_DIR}/${_proj_name}
   CMAKE_ARGS

@@ -253,13 +253,15 @@ externalproject_add(dem2points
 )
 
 externalproject_add(odm_orthophoto
-    DEPENDS           opencv
+    DEPENDS           opencv eigen34
     GIT_REPOSITORY    https://github.com/WebODM/odm_orthophoto.git
     GIT_TAG           55b66d87cc168b8ab287bf10e81d4da0890f84f1
     PREFIX            ${SB_BINARY_DIR}/odm_orthophoto
     SOURCE_DIR        ${SB_SOURCE_DIR}/odm_orthophoto
     CMAKE_ARGS        -DCMAKE_INSTALL_PREFIX:PATH=${SB_INSTALL_DIR}
                       -DOpenCV_DIR=${SB_INSTALL_DIR}/lib/cmake/opencv4
+                      -DEigen3_DIR=${SB_INSTALL_DIR}/share/eigen3/cmake
+                      -DEIGEN3_INCLUDE_DIR=${SB_INSTALL_DIR}/include/eigen3
                       ${WIN32_CMAKE_ARGS} ${WIN32_GDAL_ARGS}
                       ${APPLE_OPENMP_CMAKE_ARGS}
 )
