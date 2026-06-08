@@ -200,7 +200,10 @@ else()
             ${CMAKE_COMMAND}
             -DSOURCE_FILE=<SOURCE_DIR>/Makefile.macos
             -DOPENMP_ROOT=${APPLE_OPENMP_ROOT}
-            -P ${CMAKE_CURRENT_SOURCE_DIR}/cmake/Patch-poissonrecon-apple-openmp.cmake)
+            -P ${CMAKE_CURRENT_SOURCE_DIR}/cmake/Patch-poissonrecon-apple-openmp.cmake
+            COMMAND ${CMAKE_COMMAND}
+            -DSOURCE_FILE=<SOURCE_DIR>/PNG/pngconf.h
+            -P ${CMAKE_CURRENT_SOURCE_DIR}/cmake/Patch-poissonrecon-apple-png.cmake)
     endif()
 endif()
 externalproject_add(poissonrecon
