@@ -54,8 +54,8 @@ ExternalProject_Add(${_proj_name}
   STAMP_DIR         ${_SB_BINARY_DIR}/stamp
   #--Download step--------------
   DOWNLOAD_DIR      ${SB_DOWNLOAD_DIR}
-  GIT_REPOSITORY    https://github.com/WebODM/openMVS
-  GIT_TAG           355
+  GIT_REPOSITORY    https://github.com/leNeo/openMVS-metal
+  GIT_TAG           metal-webodm-355
   #--Update/Patch step----------
   UPDATE_COMMAND    ""
   PATCH_COMMAND
