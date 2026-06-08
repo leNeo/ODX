@@ -20,6 +20,10 @@ ExternalProject_Add(${_proj_name}
   GIT_TAG           87c8b2620d3379bd180a8c9f0f3d9709caffbd1a
   #--Update/Patch step----------
   UPDATE_COMMAND    ""
+  PATCH_COMMAND
+    ${CMAKE_COMMAND}
+    -DSOURCE_FILE=<SOURCE_DIR>/pdal/private/gdal/Raster.cpp
+    -P ${CMAKE_CURRENT_LIST_DIR}/Patch-pdal-gdal-const.cmake
   #--Configure step-------------
   SOURCE_DIR        ${SB_SOURCE_DIR}/${_proj_name}
   CMAKE_ARGS

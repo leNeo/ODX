@@ -35,18 +35,9 @@ if (APPLE)
     set(APPLE_CMAKE_ARGS
         "-DCMAKE_C_COMPILER=${APPLE_C_COMPILER}"
         "-DCMAKE_CXX_COMPILER=${APPLE_CXX_COMPILER}"
-        "-DOpenMP_ROOT=${APPLE_OPENMP_ROOT}"
-        "-DOpenMP_C_FLAGS=-Xclang -fopenmp"
-        "-DOpenMP_CXX_FLAGS=-Xclang -fopenmp"
-        "-DOpenMP_C_LIB_NAMES=libomp"
-        "-DOpenMP_CXX_LIB_NAMES=libomp"
-        "-DOpenMP_C_INCLUDE_DIR=${APPLE_OPENMP_ROOT}/include"
-        "-DOpenMP_CXX_INCLUDE_DIR=${APPLE_OPENMP_ROOT}/include"
-        "-DOpenMP_libomp_LIBRARY=${APPLE_OPENMP_ROOT}/lib/libomp.dylib"
         "-DCMAKE_POLICY_VERSION_MINIMUM=3.5"
     )
     message(STATUS "Using AppleClang: ${APPLE_C_COMPILER}, ${APPLE_CXX_COMPILER}")
-    message(STATUS "Using Homebrew OpenMP: ${APPLE_OPENMP_ROOT}")
 
     if(CMAKE_SYSTEM_PROCESSOR STREQUAL "arm64")
         list(APPEND APPLE_CMAKE_ARGS
@@ -57,6 +48,19 @@ if (APPLE)
         )
         message(STATUS "Enabling native Apple Silicon release optimizations")
     endif()
+
+    set(APPLE_OPENMP_CMAKE_ARGS
+        ${APPLE_CMAKE_ARGS}
+        "-DOpenMP_ROOT=${APPLE_OPENMP_ROOT}"
+        "-DOpenMP_C_FLAGS=-Xclang -fopenmp"
+        "-DOpenMP_CXX_FLAGS=-Xclang -fopenmp"
+        "-DOpenMP_C_LIB_NAMES=libomp"
+        "-DOpenMP_CXX_LIB_NAMES=libomp"
+        "-DOpenMP_C_INCLUDE_DIR=${APPLE_OPENMP_ROOT}/include"
+        "-DOpenMP_CXX_INCLUDE_DIR=${APPLE_OPENMP_ROOT}/include"
+        "-DOpenMP_libomp_LIBRARY=${APPLE_OPENMP_ROOT}/lib/libomp.dylib"
+    )
+    message(STATUS "Using Homebrew OpenMP: ${APPLE_OPENMP_ROOT}")
 endif()
 
 ################################
@@ -169,7 +173,10 @@ externalproject_add(mve
     GIT_TAG         066ff646837ef3f95905af45406391f76d4b266d
     UPDATE_COMMAND  ""
     SOURCE_DIR      ${SB_SOURCE_DIR}/mve
-    CMAKE_ARGS      ${WIN32_CMAKE_ARGS} ${APPLE_CMAKE_ARGS}
+    PATCH_COMMAND   ${CMAKE_COMMAND}
+                    -DSOURCE_FILE=<SOURCE_DIR>/CMakeLists.txt
+                    -P ${CMAKE_CURRENT_SOURCE_DIR}/cmake/Patch-mve-openmp.cmake
+    CMAKE_ARGS      ${WIN32_CMAKE_ARGS} ${APPLE_OPENMP_CMAKE_ARGS}
     BUILD_IN_SOURCE 1
     INSTALL_COMMAND ""
 )
@@ -189,6 +196,11 @@ else()
     set (POISSON_BIN_PATH "Linux/PoissonRecon")
     if (APPLE)
         set(POISSON_BUILD_CMD COMPILER=${APPLE_CXX_COMPILER} make -j${nproc} -f Makefile.macos poissonrecon)
+        set(POISSON_PATCH_COMMAND
+            ${CMAKE_COMMAND}
+            -DSOURCE_FILE=<SOURCE_DIR>/Makefile.macos
+            -DOPENMP_ROOT=${APPLE_OPENMP_ROOT}
+            -P ${CMAKE_CURRENT_SOURCE_DIR}/cmake/Patch-poissonrecon-apple-openmp.cmake)
     endif()
 endif()
 externalproject_add(poissonrecon
@@ -197,6 +209,7 @@ externalproject_add(poissonrecon
     PREFIX            ${SB_BINARY_DIR}/PoissonRecon
     SOURCE_DIR        ${SB_SOURCE_DIR}/PoissonRecon
     UPDATE_COMMAND    ""
+    PATCH_COMMAND     ${POISSON_PATCH_COMMAND}
     CONFIGURE_COMMAND ""
     BUILD_IN_SOURCE 1
     BUILD_COMMAND    ${POISSON_BUILD_CMD}
@@ -213,7 +226,7 @@ externalproject_add(dem2mesh
                       -P ${CMAKE_CURRENT_SOURCE_DIR}/cmake/Patch-dem2mesh-apple-openmp.cmake
     CMAKE_ARGS        -DCMAKE_INSTALL_PREFIX:PATH=${SB_INSTALL_DIR}
                       ${WIN32_GDAL_ARGS}
-                      ${APPLE_CMAKE_ARGS}
+                      ${APPLE_OPENMP_CMAKE_ARGS}
 )
 
 externalproject_add(dem2points
@@ -233,8 +246,9 @@ externalproject_add(odm_orthophoto
     PREFIX            ${SB_BINARY_DIR}/odm_orthophoto
     SOURCE_DIR        ${SB_SOURCE_DIR}/odm_orthophoto
     CMAKE_ARGS        -DCMAKE_INSTALL_PREFIX:PATH=${SB_INSTALL_DIR}
+                      -DOpenCV_DIR=${SB_INSTALL_DIR}/lib/cmake/opencv4
                       ${WIN32_CMAKE_ARGS} ${WIN32_GDAL_ARGS}
-                      ${APPLE_CMAKE_ARGS}
+                      ${APPLE_OPENMP_CMAKE_ARGS}
 )
 
 externalproject_add(fastrasterfilter
