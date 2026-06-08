@@ -5,6 +5,9 @@ externalproject_add(vcg
     GIT_REPOSITORY  https://github.com/WebODM/VCG.git
     GIT_TAG         3fe55c6fa48ca111dab31eaa594ecab33913a8f1
     UPDATE_COMMAND  ""
+    PATCH_COMMAND   ${CMAKE_COMMAND}
+                    -DVCG_SOURCE_DIR=<SOURCE_DIR>
+                    -P ${CMAKE_CURRENT_LIST_DIR}/Patch-vcg-appleclang.cmake
     SOURCE_DIR      ${SB_SOURCE_DIR}/vcg
     CONFIGURE_COMMAND ""
     BUILD_IN_SOURCE 1
